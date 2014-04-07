@@ -7,6 +7,9 @@ import org.junit.Test;
 
 public class PersonTest {
 
+	/**
+	 * Simple starter test.
+	 */
 	@Test
 	public void createPerson() {
 		Person p = new Person();
