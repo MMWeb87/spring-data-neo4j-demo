@@ -12,6 +12,9 @@ import org.springframework.data.rest.webmvc.config.RepositoryRestMvcConfiguratio
 @ComponentScan
 @Import(RepositoryRestMvcConfiguration.class)
 public class Application {
+	
+	public static final String BASE_PACKAGE = Application.class.getPackage().getName();
+	
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}

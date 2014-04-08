@@ -9,19 +9,6 @@
 		</encoder>
 	</appender>
 
-	<appender name="stash"
-		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-			<level>info</level>
-		</filter>
-		<file>target/logs/application.log</file>
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>target/logs/application.log.%d{yyyy-MM-dd}
-			</fileNamePattern>
-			<maxHistory>30</maxHistory>
-		</rollingPolicy>
-	</appender>
-
 	<logger name="me.dhallam" level="DEBUG" />
 
 	<logger name="org.eclipse.jetty" level="ERROR" />

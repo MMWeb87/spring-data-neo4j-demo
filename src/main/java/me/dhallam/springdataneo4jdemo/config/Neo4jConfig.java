@@ -1,4 +1,6 @@
-package me.dhallam.springdataneo4jdemo;
+package me.dhallam.springdataneo4jdemo.config;
+
+import static me.dhallam.springdataneo4jdemo.Application.BASE_PACKAGE;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -16,7 +18,7 @@ import org.springframework.data.neo4j.config.Neo4jConfiguration;
 public class Neo4jConfig extends Neo4jConfiguration {
 
 	public Neo4jConfig() {
-		setBasePackage(Neo4jConfig.class.getPackage().getName());
+		setBasePackage(BASE_PACKAGE);
 	}
 
 	@Bean(destroyMethod = "shutdown")
