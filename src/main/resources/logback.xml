@@ -1,0 +1,40 @@
+<!DOCTYPE configuration>
+<configuration>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%d{dd/MM/yyyy HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="stash"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>info</level>
+		</filter>
+		<file>target/logs/application.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>target/logs/application.log.%d{yyyy-MM-dd}
+			</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+	</appender>
+
+	<logger name="me.dhallam" level="DEBUG" />
+
+	<logger name="org.eclipse.jetty" level="ERROR" />
+
+	<logger name="org.apache" level="WARN" />
+
+	<logger name="ch.qos.logback" level="WARN" />
+
+	<logger name="org.springframework" level="DEBUG" />
+
+	<logger name="org.springframework.web" level="DEBUG" />
+
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>

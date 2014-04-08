@@ -2,6 +2,7 @@ package me.dhallam.springdataneo4jdemo;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.server.WrappingNeoServerBootstrapper;
 import org.springframework.context.annotation.Bean;
@@ -20,8 +21,10 @@ public class Neo4jConfig extends Neo4jConfiguration {
 
 	@Bean(destroyMethod = "shutdown")
 	public GraphDatabaseService graphDatabaseService() {
-		return new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(
-				"target/neo4jdb").newGraphDatabase();
+		return new GraphDatabaseFactory()
+				.newEmbeddedDatabaseBuilder("target/neo4jdb")
+				.setConfig(GraphDatabaseSettings.allow_store_upgrade, "true")
+				.newGraphDatabase();
 	}
 
 	@Bean(initMethod = "start", destroyMethod = "stop")
