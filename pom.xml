@@ -81,6 +81,15 @@
 	</dependencies>
 
 	<repositories>
+	    <repository>
+			<id>neo4j-releases</id>
+			<name>Neo4j Releases</name>
+			<url>http://m2.neo4j.org/content/repositories/releases/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	    
 		<repository>
 			<id>spring-milestones</id>
 			<name>Spring Milestones</name>
