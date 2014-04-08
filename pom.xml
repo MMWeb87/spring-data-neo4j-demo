@@ -20,7 +20,8 @@
 		<java.version>1.7</java.version>
 		<sdn.version>3.1.0.M1</sdn.version>
 		<!-- Uplift to pick up changes in https://github.com/spring-projects/spring-data-rest/commit/1d53e84cae3d09b09c4b5a9a4caf438701527550 
-		as 2.0.1.RELEASE has issues resulting in "No suitable HttpMessageConverter found" when POSTing -->
+			as 2.0.1.RELEASE has issues resulting in "No suitable HttpMessageConverter 
+			found" when POSTing -->
 		<sdr.version>2.1.0.M1</sdr.version>
 		<neo4j.version>2.0.1</neo4j.version>
 		<jetty.version>9.0.5.v20130815</jetty.version>
@@ -107,7 +108,13 @@
 					<target>${java.version}</target>
 				</configuration>
 			</plugin>
-			
+
+			<!-- Needed to create a runnable uber jar via mvn package -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>aspectj-maven-plugin</artifactId>
