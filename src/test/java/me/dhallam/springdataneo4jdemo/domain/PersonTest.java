@@ -6,6 +6,7 @@ import me.dhallam.springdataneo4jdemo.config.Neo4jTestConfig;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
@@ -19,16 +20,25 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
         classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 public class PersonTest {
 
+	@Autowired
+	private PersonRepository personRepo;
+	
 	/**
 	 * Simple starter test.
 	 */
 	@Test
 	public void createPerson() {
+		
+		assertThat(personRepo.count(), equalTo(0L));
+		
 		Person p = new Person();
 		p.setFirstName("MyFN");
 		p.setLastName("MyLN");
 		assertThat(p.getFirstName(), equalTo("MyFN"));
 		assertThat(p.getLastName(), equalTo("MyLN"));
 		p.persist();
+		
+		assertThat(personRepo.count(), equalTo(1L));
+		
 	}
 }
