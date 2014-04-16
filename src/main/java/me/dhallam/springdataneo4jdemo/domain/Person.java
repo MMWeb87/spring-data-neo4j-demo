@@ -1,5 +1,7 @@
 package me.dhallam.springdataneo4jdemo.domain;
 
+import java.lang.reflect.Method;
+
 import org.springframework.data.annotation.AccessType;
 import org.springframework.data.annotation.AccessType.Type;
 import org.springframework.data.neo4j.annotation.GraphId;
@@ -12,7 +14,14 @@ public class Person {
 	private Long id;
 	
 	public Long getId() {
-		return getNodeId();
+		// getNodeId() doesn't exist until it's weaved in, so the initial mvn compilation
+		// fails if it's directly coded here, so do it reflectively.
+		try {
+			Method m = this.getClass().getMethod("getNodeId");
+			return (Long)m.invoke(this);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to invoke getNodeId()");
+		} 
 	}
 
 	private String firstName;
