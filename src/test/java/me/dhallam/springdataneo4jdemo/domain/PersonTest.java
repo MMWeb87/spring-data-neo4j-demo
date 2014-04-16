@@ -2,6 +2,7 @@ package me.dhallam.springdataneo4jdemo.domain;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import me.dhallam.springdataneo4jdemo.config.Neo4jTestConfig;
 
 import org.junit.Test;
@@ -16,7 +17,6 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
-import org.springframework.transaction.annotation.Transactional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { Neo4jTestConfig.class }, loader = AnnotationConfigContextLoader.class)
@@ -31,51 +31,66 @@ public class PersonTest {
 	@Autowired
 	private GraphDatabaseService database;
 
-	/**
-	 * Simple starter test.
-	 */
 	@Test
-	public void createPerson() {
+	public void idStillVisibleOutsideImplicitTx() {
+		Person p = new Person();
+		p = p.persist(); // call to persist will create a tx
+		LOG.info("p.getId(): " + p.getId());
+	}
+
+	@Test
+	public void idStillVisibleOutsideExlicitTx() {
+		Person p = new Person();
+		// Explicitly create tx and commit
+		try (Transaction tx = database.beginTx()) {
+			p.persist();
+			assertThat(p.getId(), equalTo(0L));
+			assertThat(p.getNodeId(), equalTo(0L));
+			tx.success();
+		}
+
+		assertThat(p.getId(), equalTo(0L));
+		assertThat(p.getNodeId(), equalTo(0L));
+	}
+
+	@Test
+	public void inTxOutTxInTx() {
+
+		Person p = new Person();
+		
+		assertThat(p.getId(), nullValue());
 
 		try (Transaction tx = database.beginTx()) {
 			assertThat(personRepo.count(), equalTo(0L));
 
-			Person p1 = new Person();
-			p1.setFirstName("MyFN1");
-			p1.setLastName("MyLN1");
-			assertThat(p1.getFirstName(), equalTo("MyFN1"));
-			assertThat(p1.getLastName(), equalTo("MyLN1"));
-			p1.persist();
+			assertThat(p.getId(), nullValue());
 
-			LOG.info("p1.getId(): " + p1.getId());
-			LOG.info("p1.getNodeId(): " + p1.getNodeId());
+			p.setFirstName("MyFN1");
+			p.setLastName("MyLN1");
+			assertThat(p.getFirstName(), equalTo("MyFN1"));
+			assertThat(p.getLastName(), equalTo("MyLN1"));
+			p.persist();
+
+			LOG.info("p1.getId(): " + p.getId());
+			LOG.info("p1.getNodeId(): " + p.getNodeId());
 
 			assertThat(personRepo.count(), equalTo(1L));
 
-			Person p2 = new Person();
-			p2.setFirstName("MyFN2");
-			p2.setLastName("MyLN2");
-			assertThat(p2.getFirstName(), equalTo("MyFN2"));
-			assertThat(p2.getLastName(), equalTo("MyLN2"));
-			p2.persist();
+			tx.success();
+		}
 
-			LOG.info("p2.getId(): " + p2.getId());
-			LOG.info("p2.getNodeId(): " + p2.getNodeId());
+		LOG.info("Outside tx");
+		assertThat(p.getId(), equalTo(0L));
+		assertThat(p.getNodeId(), equalTo(0L));
 
-			assertThat(personRepo.count(), equalTo(2L));
+		try (Transaction tx = database.beginTx()) {
+			LOG.info("Started new transaction");
 
-			Person p3 = new Person();
-			p3.setFirstName("MyFN3");
-			p3.setLastName("MyLN3");
-			assertThat(p3.getFirstName(), equalTo("MyFN3"));
-			assertThat(p3.getLastName(), equalTo("MyLN3"));
-			p3.persist();
+			assertThat(personRepo.count(), equalTo(1L));
 
-			LOG.info("p3.getId(): " + p3.getId());
-			LOG.info("p3.getNodeId(): " + p3.getNodeId());
+			assertThat(p.getId(), equalTo(0L));
+			assertThat(p.getNodeId(), equalTo(0L));
 
-			assertThat(personRepo.count(), equalTo(3L));
-			
 			tx.success();
 		}
 
