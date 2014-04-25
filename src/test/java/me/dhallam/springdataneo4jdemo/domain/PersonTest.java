@@ -4,11 +4,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import me.dhallam.springdataneo4jdemo.config.Neo4jTestConfig;
+import me.dhallam.springdataneo4jdemo.domain.Person.Gender;
+import me.dhallam.springdataneo4jdemo.utils.CypherDump;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.helpers.collection.IteratorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+import org.springframework.transaction.annotation.Transactional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { Neo4jTestConfig.class }, loader = AnnotationConfigContextLoader.class)
@@ -57,7 +61,7 @@ public class PersonTest {
 	public void inTxOutTxInTx() {
 
 		Person p = new Person();
-		
+
 		assertThat(p.getId(), nullValue());
 
 		try (Transaction tx = database.beginTx()) {
@@ -94,5 +98,65 @@ public class PersonTest {
 			tx.success();
 		}
 
+	}
+
+	@Test
+	@Transactional
+	public void testRepository() {
+		assertThat(personRepo.count(), equalTo(0L));
+
+		Person john = new Person().setIdCode("A").setGender(Gender.MALE)
+				.setFirstName("John").setLastName("Smith").persist();
+		Person jane = new Person().setIdCode("B").setGender(Gender.FEMALE)
+				.setFirstName("Jane").setLastName("Smith").persist();
+		Person pete = new Person().setIdCode("C").setGender(Gender.MALE)
+				.setFirstName("Pete").setLastName("Marsden").persist();
+
+		pete.addFriends(john, jane);
+
+		CypherDump.dump(database);
+
+		assertThat(personRepo.count(), equalTo(3L));
+
+		// MATCH (`person`:`Person`) WHERE `person`.`firstName` = {0} AND
+		// `person`.`lastName` = {1} RETURN `person`
+		assertThat(
+				IteratorUtil.asList(
+						personRepo.findByFirstNameAndLastName("John", "Smith"))
+						.size(), equalTo(1));
+
+		// MATCH (`person`:`Person`) WHERE `person`.`lastName` = {0} RETURN
+		// `person`
+		assertThat(IteratorUtil.asList(personRepo.findByLastName("Smith"))
+				.size(), equalTo(2));
+
+		// MATCH (`person`:`Person`) WHERE `person`.`gender` = {0} RETURN
+		// `person`
+		assertThat(IteratorUtil.asList(personRepo.findByGender(Gender.MALE))
+				.size(), equalTo(2));
+
+		// MATCH (`person`:`Person`) WHERE `person`.`gender` = {0} RETURN
+		// `person`
+		assertThat(IteratorUtil.asList(personRepo.findByGender(Gender.FEMALE))
+				.size(), equalTo(1));
+
+		// MATCH (`person`)-[:`FRIENDS_WITH`]-(`person_friends`) WHERE
+		// `person_friends`.`gender` = {0} RETURN `person`
+		// Should return Pete as he is friends with Jane
+		assertThat(
+				IteratorUtil.asList(
+						personRepo.findByFriendsGender(Gender.FEMALE)).size(),
+				equalTo(1));
+
+		// MATCH (`person`)-[:`FRIENDS_WITH`]-(`person_friends`),
+		// (`person`)-[:`FRIENDS_WITH`]-(`person_friends`) WHERE
+		// `person_friends`.`lastName` = 'Smith' AND `person_friends`.`gender` =
+		// 'MALE'
+		// RETURN `person`
+		// Should return Pete as he is friends with John Smith
+		assertThat(
+				IteratorUtil.asList(
+						personRepo.findByFriendsLastNameAndFriendsGender(
+								"Smith", Gender.MALE)).size(), equalTo(1));
 	}
 }

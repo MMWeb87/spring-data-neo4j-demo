@@ -24,7 +24,7 @@
 			as 2.0.1.RELEASE has issues resulting in "No suitable HttpMessageConverter 
 			found" when POSTing -->
 		<sdr.version>2.1.0.M1</sdr.version>
-		<neo4j.version>2.0.1</neo4j.version>
+		<neo4j.version>2.0.2</neo4j.version>
 		<jetty.version>9.0.5.v20130815</jetty.version>
 		<aspectj.version>1.7.4</aspectj.version>
 	</properties>
