@@ -2,7 +2,13 @@ package me.dhallam.springdataneo4jdemo.domain;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+
 import me.dhallam.springdataneo4jdemo.config.Neo4jTestConfig;
 import me.dhallam.springdataneo4jdemo.domain.Person.Gender;
 import me.dhallam.springdataneo4jdemo.utils.CypherDump;
@@ -158,5 +164,57 @@ public class PersonTest {
 				IteratorUtil.asList(
 						personRepo.findByFriendsLastNameAndFriendsGender(
 								"Smith", Gender.MALE)).size(), equalTo(1));
+	}
+
+	@Test
+	@Transactional
+	public void testAccessToASetTypeProperty() {
+		Person p = new Person();
+		p.setFirstName("Bob").setLastName("Smith")
+				.addPhoneNumber("01234567890").addPhoneNumber("01234098765");
+		p.addAdditionalMetadata("metadata1", "valuebob1")
+				.addAdditionalMetadata("metadata2", "valuebob2");
+		p.persist();
+		p = new Person();
+		p.setFirstName("Pete").setLastName("Smith")
+				.addPhoneNumber("04321567890").addPhoneNumber("04321098765");
+		p.addAdditionalMetadata("metadata1", "valuepete1")
+				.addAdditionalMetadata("metadata2", "valuepete2");
+		p.persist();
+
+		CypherDump.dump(database);
+
+		Map<String, Object> params = new HashMap<>();
+
+		// Check that we fail to find where the number is wrong
+		String query = "MATCH (p) WHERE ('01234' IN p.phoneNumbers) RETURN p";
+		Person res = personRepo.query(query, params).singleOrNull();
+		assertThat(res, nullValue());
+
+		// Check that we find where the number is complete and a match
+		query = "MATCH (p) WHERE ('01234567890' IN p.phoneNumbers) RETURN p";
+		res = personRepo.query(query, params).singleOrNull();
+		assertThat(res, not(nullValue()));
+		assertThat(res.getFirstName(), equalTo("Bob"));
+
+		// Check that we find where the number is a regex (e.g. user has
+		// searched for 01234 and
+		// we want to find all people with phoneNumbers that contain that string
+		query = "MATCH (p) WHERE [n IN p.phoneNumbers WHERE n =~ '.*01234.*'] RETURN p";
+		res = personRepo.query(query, params).singleOrNull();
+		assertThat(res, not(nullValue()));
+		assertThat(res.getFirstName(), equalTo("Bob"));
+
+		// Check that we get multiple hits where we should get them
+		query = "MATCH (p) WHERE [n IN p.phoneNumbers WHERE n =~ '.*567.*'] RETURN p";
+		List<Person> people = IteratorUtil.asList(personRepo.query(query,
+				params));
+		assertThat(people.size(), equalTo(2));
+
+		// Check that we get multiple hits where we should get them with matches on multiple
+		// phone numbers per person
+		query = "MATCH (p) WHERE [n IN p.phoneNumbers WHERE n =~ '.*0.*'] RETURN p";
+		people = IteratorUtil.asList(personRepo.query(query, params));
+		assertThat(people.size(), equalTo(2));
 	}
 }

@@ -2,6 +2,8 @@ package me.dhallam.springdataneo4jdemo.domain;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -13,6 +15,7 @@ import org.springframework.data.annotation.AccessType.Type;
 import org.springframework.data.neo4j.annotation.GraphId;
 import org.springframework.data.neo4j.annotation.NodeEntity;
 import org.springframework.data.neo4j.annotation.RelatedTo;
+import org.springframework.data.neo4j.fieldaccess.DynamicProperties;
 
 @NodeEntity
 public class Person {
@@ -45,6 +48,8 @@ public class Person {
 	private String firstName;
 	private String lastName;
 	private Gender gender;
+	private Set<String> phoneNumbers = new HashSet<>();
+	private DynamicProperties additionalMetadata;
 
 	private transient Integer hash;
 
@@ -98,7 +103,35 @@ public class Person {
 		this.gender = gender;
 		return this;
 	}
+	
+	public Set<String> getPhoneNumbers() {
+		return Collections.unmodifiableSet(phoneNumbers);
+	}
 
+	public Person addPhoneNumber(String phoneNumber) {
+		this.phoneNumbers.add(phoneNumber);
+		return this;
+	}
+	
+	public Person removePhoneNumber(String phoneNumber) {
+		this.phoneNumbers.remove(phoneNumber);
+		return this;
+	}
+	
+	public Map<String, Object> getAdditionalMetadata() {
+		return Collections.unmodifiableMap(additionalMetadata.asMap());
+	}
+	
+	public Person addAdditionalMetadata(String key, String value) {
+		additionalMetadata.setProperty(key, value);
+		return this;
+	}
+	
+	public Person removeAdditionalMetadata(String key) {
+		additionalMetadata.removeProperty(key);
+		return this;
+	}
+	
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this);
