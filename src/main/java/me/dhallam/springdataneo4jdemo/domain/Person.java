@@ -1,6 +1,5 @@
 package me.dhallam.springdataneo4jdemo.domain;
 
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.annotation.AccessType;
 import org.springframework.data.annotation.AccessType.Type;
 import org.springframework.data.neo4j.annotation.GraphId;
+import org.springframework.data.neo4j.annotation.Indexed;
 import org.springframework.data.neo4j.annotation.NodeEntity;
 import org.springframework.data.neo4j.annotation.RelatedTo;
 import org.springframework.data.neo4j.fieldaccess.DynamicProperties;
@@ -30,21 +30,12 @@ public class Person {
 	@AccessType(Type.PROPERTY)
 	private Long id;
 
-	public Long getId() {
-		// getNodeId() doesn't exist until it's weaved in, so the initial mvn compilation
-		// fails if it's directly coded here, so do it reflectively.
-		try {
-			Method m = this.getClass().getMethod("getNodeId");
-			return (Long)m.invoke(this);
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to invoke getNodeId()");
-		} 
-	}
-
 	@RelatedTo(type = "FRIENDS_WITH", direction = Direction.BOTH)
 	private Set<Person> friends;
 
+	@Indexed(unique=true)
 	private String idCode;
+	
 	private String firstName;
 	private String lastName;
 	private Gender gender;

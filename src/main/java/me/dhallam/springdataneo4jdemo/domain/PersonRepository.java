@@ -8,6 +8,8 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 @RepositoryRestResource(collectionResourceRel = "people", path = "people")
 public interface PersonRepository extends GraphRepository<Person> {
+	
+	Person findByIdCode(String idCode);
 
 	Result<Person> findByFirstNameAndLastName(String firstName, String lastName);
 	

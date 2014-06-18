@@ -5,8 +5,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import me.dhallam.springdataneo4jdemo.config.Neo4jTestConfig;
@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { Neo4jTestConfig.class }, loader = AnnotationConfigContextLoader.class)
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
+@ActiveProfiles("test")
 public class PersonTest {
 
 	private static final Logger LOG = LoggerFactory.getLogger(PersonTest.class);
@@ -45,7 +47,7 @@ public class PersonTest {
 	public void idStillVisibleOutsideImplicitTx() {
 		Person p = new Person();
 		p = p.persist(); // call to persist will create a tx
-		LOG.info("p.getId(): " + p.getId());
+		LOG.info("p.getNodeId(): " + p.getNodeId());
 	}
 
 	@Test
@@ -54,12 +56,10 @@ public class PersonTest {
 		// Explicitly create tx and commit
 		try (Transaction tx = database.beginTx()) {
 			p.persist();
-			assertThat(p.getId(), equalTo(0L));
 			assertThat(p.getNodeId(), equalTo(0L));
 			tx.success();
 		}
 
-		assertThat(p.getId(), equalTo(0L));
 		assertThat(p.getNodeId(), equalTo(0L));
 	}
 
@@ -68,12 +68,12 @@ public class PersonTest {
 
 		Person p = new Person();
 
-		assertThat(p.getId(), nullValue());
+		assertThat(p.getNodeId(), nullValue());
 
 		try (Transaction tx = database.beginTx()) {
 			assertThat(personRepo.count(), equalTo(0L));
 
-			assertThat(p.getId(), nullValue());
+			assertThat(p.getNodeId(), nullValue());
 
 			p.setFirstName("MyFN1");
 			p.setLastName("MyLN1");
@@ -81,7 +81,6 @@ public class PersonTest {
 			assertThat(p.getLastName(), equalTo("MyLN1"));
 			p.persist();
 
-			LOG.info("p1.getId(): " + p.getId());
 			LOG.info("p1.getNodeId(): " + p.getNodeId());
 
 			assertThat(personRepo.count(), equalTo(1L));
@@ -90,7 +89,6 @@ public class PersonTest {
 		}
 
 		LOG.info("Outside tx");
-		assertThat(p.getId(), equalTo(0L));
 		assertThat(p.getNodeId(), equalTo(0L));
 
 		try (Transaction tx = database.beginTx()) {
@@ -98,7 +96,6 @@ public class PersonTest {
 
 			assertThat(personRepo.count(), equalTo(1L));
 
-			assertThat(p.getId(), equalTo(0L));
 			assertThat(p.getNodeId(), equalTo(0L));
 
 			tx.success();
@@ -211,8 +208,8 @@ public class PersonTest {
 				params));
 		assertThat(people.size(), equalTo(2));
 
-		// Check that we get multiple hits where we should get them with matches on multiple
-		// phone numbers per person
+		// Check that we get multiple hits where we should get them with matches
+		// on multiple phone numbers per person
 		query = "MATCH (p) WHERE [n IN p.phoneNumbers WHERE n =~ '.*0.*'] RETURN p";
 		people = IteratorUtil.asList(personRepo.query(query, params));
 		assertThat(people.size(), equalTo(2));
