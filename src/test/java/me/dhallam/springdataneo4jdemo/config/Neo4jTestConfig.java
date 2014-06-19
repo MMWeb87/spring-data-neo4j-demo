@@ -1,5 +1,6 @@
 package me.dhallam.springdataneo4jdemo.config;
 
+import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.TestGraphDatabaseFactory;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +24,11 @@ public class Neo4jTestConfig extends Neo4jAspectConfiguration {
 	@Bean(destroyMethod = "shutdown")
 	public GraphDatabaseService graphDatabaseService() {
 		return new TestGraphDatabaseFactory().newImpermanentDatabase();
+	}
+
+	@Bean
+	public ExecutionEngine executionEngine() {
+		return new ExecutionEngine(graphDatabaseService());
 	}
 
 }

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,6 +17,8 @@ import me.dhallam.springdataneo4jdemo.config.Neo4jTestConfig;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.neo4j.cypher.javacompat.ExecutionEngine;
+import org.neo4j.cypher.javacompat.ExecutionResult;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
@@ -66,6 +69,20 @@ public class PersonConcurrencyTest {
 	@Autowired
 	Neo4jTemplate template;
 
+	@Autowired
+	ExecutionEngine engine;
+
+	@Test
+	public void firstThreadCreatesNodeAheadOfOthersEngine() throws Exception {
+		firstThreadCreatesNodeAheadOfOthers(true);
+	}
+
+	@Test
+	public void firstThreadCreatesNodeAheadOfOthersNodeEntity()
+			throws Exception {
+		firstThreadCreatesNodeAheadOfOthers(false);
+	}
+
 	/**
 	 * All threads run in parallel, but the first thread has a clear head start
 	 * to call persist. This is currently resulting in most of the following
@@ -74,8 +91,8 @@ public class PersonConcurrencyTest {
 	 * exception of the head start. But each transaction starts with the same
 	 * view of the database.
 	 */
-	@Test
-	public void firstThreadCreatesNodeAheadOfOthers() throws Exception {
+	private void firstThreadCreatesNodeAheadOfOthers(boolean useEngine)
+			throws Exception {
 		assertThat(txManager.getUserTransaction().getStatus(),
 				equalTo(Status.STATUS_NO_TRANSACTION));
 
@@ -91,14 +108,14 @@ public class PersonConcurrencyTest {
 		// up-front query on the DB from the following threads will not find the
 		// node if it queried
 		executorService.execute(new TransactionalNodeCreator("t1", 0, 5000,
-				idCode, exceptions));
+				idCode, exceptions, useEngine));
 		for (int i = 2; i <= 10; i++) {
 			// Delay start of trying to persist by 1000ms so that the first
 			// thread has chance to do it and these should queue up behind, in
 			// theory. When these threads create their tx, the node from t1
 			// will not have been committed.
 			executorService.execute(new TransactionalNodeCreator("t" + i, 1000,
-					100, idCode, exceptions));
+					100, idCode, exceptions, useEngine));
 		}
 
 		executorService.shutdown();
@@ -112,12 +129,21 @@ public class PersonConcurrencyTest {
 		assertThat(exceptions.size(), equalTo(0));
 	}
 
+	@Test
+	public void threadsCreateNodesInSeriesEngine() throws Exception {
+		threadsCreateNodesInSeries(true);
+	}
+
+	@Test
+	public void threadsCreateNodesInSeriesNodeEntity() throws Exception {
+		threadsCreateNodesInSeries(false);
+	}
+
 	/**
 	 * Create an initial Person with a fixed idCode, then invoke the test that
 	 * creates the same node over multiple threads.
 	 */
-	@Test
-	public void threadsCreateNodesInSeries() throws Exception {
+	private void threadsCreateNodesInSeries(boolean useEngine) throws Exception {
 		assertThat(txManager.getUserTransaction().getStatus(),
 				equalTo(Status.STATUS_NO_TRANSACTION));
 
@@ -128,7 +154,7 @@ public class PersonConcurrencyTest {
 		for (int i = 1; i <= 10; i++) {
 			// Spawn a separate thread for the creator for completeness
 			Thread t = new Thread(new TransactionalNodeCreator("t" + i, 1000,
-					100, idCode, exceptions));
+					100, idCode, exceptions, useEngine));
 			t.start();
 			t.join();
 		}
@@ -137,13 +163,24 @@ public class PersonConcurrencyTest {
 		assertThat(personRepo.count(), equalTo(1L));
 	}
 
+	@Test
+	public void threadsCreateNodesInParallelWhenNodeAlreadyExistsEngine()
+			throws Exception {
+		threadsCreateNodesInParallelWhenNodeAlreadyExists(true);
+	}
+
+	@Test
+	public void threadsCreateNodesInParallelWhenNodeAlreadyExistsNodeEntity()
+			throws Exception {
+		threadsCreateNodesInParallelWhenNodeAlreadyExists(false);
+	}
+
 	/**
 	 * Create an initial Person with a fixed idCode, then invoke the test that
 	 * creates the same node over multiple threads.
 	 */
-	@Test
-	public void threadsCreateNodesInParallelWhenNodeAlreadyExists()
-			throws Exception {
+	private void threadsCreateNodesInParallelWhenNodeAlreadyExists(
+			boolean useEngine) throws Exception {
 		assertThat(txManager.getUserTransaction().getStatus(),
 				equalTo(Status.STATUS_NO_TRANSACTION));
 
@@ -153,7 +190,7 @@ public class PersonConcurrencyTest {
 
 		// Spawn a separate thread for the creator for completeness
 		Thread t = new Thread(new TransactionalNodeCreator(name, 1000, 100,
-				idCode, exceptions));
+				idCode, exceptions, useEngine));
 		t.start();
 		t.join();
 
@@ -161,7 +198,17 @@ public class PersonConcurrencyTest {
 		assertThat(personRepo.count(), equalTo(1L));
 
 		// Now try to create the same nodes in parallel
-		threadsCreateSameNodeInParallel();
+		threadsCreateSameNodeInParallel(useEngine);
+	}
+
+	@Test
+	public void threadsCreateSameNodeInParallelEngine() throws Exception {
+		threadsCreateSameNodeInParallel(true);
+	}
+
+	@Test
+	public void threadsCreateSameNodeInParallelNodeEntity() throws Exception {
+		threadsCreateSameNodeInParallel(false);
 	}
 
 	/**
@@ -172,8 +219,8 @@ public class PersonConcurrencyTest {
 	 * until that tx commits. Then another thread picks up the lock, persists,
 	 * commits, then the next thread, etc.
 	 */
-	@Test
-	public void threadsCreateSameNodeInParallel() throws Exception {
+	private void threadsCreateSameNodeInParallel(boolean useEngine)
+			throws Exception {
 		assertThat(txManager.getUserTransaction().getStatus(),
 				equalTo(Status.STATUS_NO_TRANSACTION));
 
@@ -188,7 +235,7 @@ public class PersonConcurrencyTest {
 
 		for (int i = 1; i <= threadCount; i++) {
 			executorService.execute(new TransactionalNodeCreator("t" + i, 100,
-					500, idCode, exceptions));
+					500, idCode, exceptions, useEngine));
 		}
 
 		executorService.shutdown();
@@ -213,14 +260,22 @@ public class PersonConcurrencyTest {
 		final String idCode;
 		final List<Throwable> exceptions;
 		final String name;
+		final boolean useEngine;
 
 		public TransactionalNodeCreator(String name, long initialSleep,
-				long finalSleep, String idCode, List<Throwable> exceptions) {
+				long finalSleep, String idCode, List<Throwable> exceptions,
+				boolean useEngine) {
 			this.name = name;
 			this.initialSleep = initialSleep;
 			this.finalSleep = finalSleep;
 			this.idCode = idCode;
 			this.exceptions = exceptions;
+			this.useEngine = useEngine;
+		}
+
+		public TransactionalNodeCreator(String name, long initialSleep,
+				long finalSleep, String idCode, List<Throwable> exceptions) {
+			this(name, initialSleep, finalSleep, idCode, exceptions, false);
 		}
 
 		@Override
@@ -231,7 +286,21 @@ public class PersonConcurrencyTest {
 						equalTo(Status.STATUS_ACTIVE));
 				Thread.sleep(initialSleep);
 				LOG.debug("{} persisting", name);
-				new Person().setIdCode(idCode).persist();
+
+				if (useEngine) {
+					final HashMap<String, Object> params = new HashMap<>();
+					params.put("value", "aaa");
+					final HashMap<String, Object> props = new HashMap<>();
+					props.put("idCode", "aaa");
+					params.put("props", props);
+					ExecutionResult result = engine
+							.execute(
+									"MERGE (n:`Person` {`idCode`: {value}}) ON CREATE SET n={props} return n",
+									params);
+					// LOG.debug(result.dumpToString());
+				} else {
+					new Person().setIdCode(idCode).persist();
+				}
 				LOG.debug("{} persisted", name);
 				Thread.sleep(finalSleep);
 				tx.success();
