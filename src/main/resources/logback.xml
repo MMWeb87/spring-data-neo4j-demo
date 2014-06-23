@@ -9,7 +9,22 @@
 		</encoder>
 	</appender>
 
+	<appender name="DEBUG_ASPECT_FILE" class="ch.qos.logback.core.FileAppender">
+		<file>target/debug-aspect.log</file>
+		<append>false</append>
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%-8relative [%-17thread] %-34method - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
 	<logger name="me.dhallam" level="DEBUG" />
+	
+	<logger name="me.dhallam.springdataneo4jdemo.utils.DebugAspect" level="DEBUG">
+	    <appender-ref ref="DEBUG_ASPECT_FILE"/>
+	</logger>
 
 	<logger name="org.eclipse.jetty" level="ERROR" />
 
@@ -20,9 +35,10 @@
 	<logger name="org.springframework" level="WARN" />
 
 	<logger name="org.springframework.web" level="INFO" />
-	
-	<logger name="org.springframework.data.neo4j.support.query" level="DEBUG" />
-	
+
+	<logger name="org.springframework.data.neo4j.support.query"
+		level="DEBUG" />
+
 	<root level="DEBUG">
 		<appender-ref ref="STDOUT" />
 	</root>

@@ -73,14 +73,21 @@ public class PersonConcurrencyTest {
 	ExecutionEngine engine;
 
 	@Test
-	public void firstThreadCreatesNodeAheadOfOthersEngine() throws Exception {
-		firstThreadCreatesNodeAheadOfOthers(true);
+	public void firstThreadCreatesNodeAheadOfOthersEngineThenNodeEntity()
+			throws Exception {
+		firstThreadCreatesNodeAheadOfOthers(true, false);
+	}
+
+	@Test
+	public void firstThreadCreatesNodeAheadOfOthersNodeEntityThenEngine()
+			throws Exception {
+		firstThreadCreatesNodeAheadOfOthers(false, true);
 	}
 
 	@Test
 	public void firstThreadCreatesNodeAheadOfOthersNodeEntity()
 			throws Exception {
-		firstThreadCreatesNodeAheadOfOthers(false);
+		firstThreadCreatesNodeAheadOfOthers(false, false);
 	}
 
 	/**
@@ -91,8 +98,8 @@ public class PersonConcurrencyTest {
 	 * exception of the head start. But each transaction starts with the same
 	 * view of the database.
 	 */
-	private void firstThreadCreatesNodeAheadOfOthers(boolean useEngine)
-			throws Exception {
+	private void firstThreadCreatesNodeAheadOfOthers(boolean useEngineInitial,
+			boolean useEngineRest) throws Exception {
 		assertThat(txManager.getUserTransaction().getStatus(),
 				equalTo(Status.STATUS_NO_TRANSACTION));
 
@@ -108,18 +115,18 @@ public class PersonConcurrencyTest {
 		// up-front query on the DB from the following threads will not find the
 		// node if it queried
 		executorService.execute(new TransactionalNodeCreator("t1", 0, 5000,
-				idCode, exceptions, useEngine));
+				idCode, exceptions, useEngineInitial));
 		for (int i = 2; i <= 10; i++) {
 			// Delay start of trying to persist by 1000ms so that the first
 			// thread has chance to do it and these should queue up behind, in
 			// theory. When these threads create their tx, the node from t1
 			// will not have been committed.
 			executorService.execute(new TransactionalNodeCreator("t" + i, 1000,
-					100, idCode, exceptions, useEngine));
+					100, idCode, exceptions, useEngineRest));
 		}
 
 		executorService.shutdown();
-		executorService.awaitTermination(1, TimeUnit.MINUTES);
+		executorService.awaitTermination(100, TimeUnit.MINUTES);
 
 		for (Throwable e : exceptions) {
 			String msg = e.getMessage();

@@ -153,6 +153,16 @@
 							<artifactId>spring-data-neo4j-aspects</artifactId>
 						</aspectLibrary>
 					</aspectLibraries>
+					<weaveDependencies>
+						<weaveDependency>
+							<groupId>org.neo4j</groupId>
+							<artifactId>neo4j-kernel</artifactId>
+						</weaveDependency>
+						<weaveDependency>
+							<groupId>org.springframework.data</groupId>
+							<artifactId>spring-data-neo4j</artifactId>
+						</weaveDependency>
+					</weaveDependencies>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 				</configuration>
@@ -170,7 +180,7 @@
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
-		
+
 		<repository>
 			<id>neo4j-snapshots</id>
 			<name>Neo4j Snapshots</name>
@@ -188,7 +198,7 @@
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
-		
+
 		<repository>
 			<id>spring-snapshots</id>
 			<name>Spring Snapshots</name>
