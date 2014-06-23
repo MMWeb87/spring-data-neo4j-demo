@@ -18,7 +18,6 @@ import me.dhallam.springdataneo4jdemo.config.Neo4jTestConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
-import org.neo4j.cypher.javacompat.ExecutionResult;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
@@ -300,11 +299,9 @@ public class PersonConcurrencyTest {
 					final HashMap<String, Object> props = new HashMap<>();
 					props.put("idCode", "aaa");
 					params.put("props", props);
-					ExecutionResult result = engine
-							.execute(
-									"MERGE (n:`Person` {`idCode`: {value}}) ON CREATE SET n={props} return n",
-									params);
-					// LOG.debug(result.dumpToString());
+					engine.execute(
+							"MERGE (n:`Person` {`idCode`: {value}}) ON CREATE SET n={props} return n",
+							params);
 				} else {
 					new Person().setIdCode(idCode).persist();
 				}

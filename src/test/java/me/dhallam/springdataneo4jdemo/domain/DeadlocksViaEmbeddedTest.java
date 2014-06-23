@@ -3,7 +3,6 @@ package me.dhallam.springdataneo4jdemo.domain;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -36,9 +35,8 @@ public class DeadlocksViaEmbeddedTest {
 
 		ExecutorService executorService = Executors.newFixedThreadPool(50);
 
-		List<Future> jobs = new ArrayList<>();
+		List<Future<?>> jobs = new ArrayList<>();
 
-		final Random random = new Random();
 		for (int i = 0; i < 500; i++) {
 			Future<?> job = executorService.submit(new Runnable() {
 				@Override
@@ -56,7 +54,7 @@ public class DeadlocksViaEmbeddedTest {
 
 		}
 
-		for (Future future : jobs) {
+		for (Future<?> future : jobs) {
 			future.get();
 		}
 
