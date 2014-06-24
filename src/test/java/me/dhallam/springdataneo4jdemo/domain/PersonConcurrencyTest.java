@@ -290,8 +290,10 @@ public class PersonConcurrencyTest {
 			try (Transaction tx = database.beginTx()) {
 				assertThat(txManager.getUserTransaction().getStatus(),
 						equalTo(Status.STATUS_ACTIVE));
+				LOG.debug("{} going to sleep for {}ms", name, initialSleep);
 				Thread.sleep(initialSleep);
-				LOG.debug("{} persisting", name);
+				LOG.debug("{} awake", name);
+				LOG.debug("{} about to persist", name);
 
 				if (useEngine) {
 					final HashMap<String, Object> params = new HashMap<>();
@@ -306,13 +308,16 @@ public class PersonConcurrencyTest {
 					new Person().setIdCode(idCode).persist();
 				}
 				LOG.debug("{} persisted", name);
+				LOG.debug("{} going to sleep for {}ms", name, finalSleep);
 				Thread.sleep(finalSleep);
+				LOG.debug("{} awake", name);
 				tx.success();
 				LOG.debug("{} success", name);
 			} catch (Exception e) {
 				exceptions.add(e);
 				LOG.debug("{} failed", name);
 			}
+			LOG.debug("{} exiting", name);
 		}
 	}
 }

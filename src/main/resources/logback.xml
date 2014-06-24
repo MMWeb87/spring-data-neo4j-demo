@@ -15,7 +15,7 @@
 		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
 			by default -->
 		<encoder>
-			<pattern>%-8relative [%-17thread] %-34method - %msg%n
+			<pattern>%-8relative [%-17thread] %-12method - %msg%n
 			</pattern>
 		</encoder>
 	</appender>
