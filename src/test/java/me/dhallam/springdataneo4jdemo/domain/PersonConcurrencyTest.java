@@ -115,7 +115,7 @@ public class PersonConcurrencyTest {
 		// node if it queried
 		executorService.execute(new TransactionalNodeCreator("t1", 0, 5000,
 				idCode, exceptions, useEngineInitial));
-		for (int i = 2; i <= 10; i++) {
+		for (int i = 2; i <= 3; i++) {
 			// Delay start of trying to persist by 1000ms so that the first
 			// thread has chance to do it and these should queue up behind, in
 			// theory. When these threads create their tx, the node from t1
