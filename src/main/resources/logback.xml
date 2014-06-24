@@ -25,6 +25,10 @@
 	<logger name="me.dhallam.springdataneo4jdemo.utils.DebugAspect" level="DEBUG">
 	    <appender-ref ref="DEBUG_ASPECT_FILE"/>
 	</logger>
+	
+	<logger name="me.dhallam.springdataneo4jdemo.domain" level="DEBUG">
+	    <appender-ref ref="DEBUG_ASPECT_FILE"/>
+	</logger>
 
 	<logger name="org.eclipse.jetty" level="ERROR" />
 
