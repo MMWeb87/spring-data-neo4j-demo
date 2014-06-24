@@ -113,7 +113,7 @@ public class PersonConcurrencyTest {
 		// threads all start their tx's before the first has committed (i.e. an
 		// up-front query on the DB from the following threads will not find the
 		// node if it queried
-		executorService.execute(new TransactionalNodeCreator("t1", 0, 5000,
+		executorService.execute(new TransactionalNodeCreator("t1", 0, 10000,
 				idCode, exceptions, useEngineInitial));
 		for (int i = 2; i <= 3; i++) {
 			// Delay start of trying to persist by 1000ms so that the first
