@@ -72,21 +72,14 @@ public class PersonConcurrencyTest {
 	ExecutionEngine engine;
 
 	@Test
-	public void firstThreadCreatesNodeAheadOfOthersEngineThenNodeEntity()
-			throws Exception {
-		firstThreadCreatesNodeAheadOfOthers(true, false);
-	}
-
-	@Test
-	public void firstThreadCreatesNodeAheadOfOthersNodeEntityThenEngine()
-			throws Exception {
-		firstThreadCreatesNodeAheadOfOthers(false, true);
+	public void firstThreadCreatesNodeAheadOfOthersEngine() throws Exception {
+		firstThreadCreatesNodeAheadOfOthers(true);
 	}
 
 	@Test
 	public void firstThreadCreatesNodeAheadOfOthersNodeEntity()
 			throws Exception {
-		firstThreadCreatesNodeAheadOfOthers(false, false);
+		firstThreadCreatesNodeAheadOfOthers(false);
 	}
 
 	/**
@@ -97,8 +90,8 @@ public class PersonConcurrencyTest {
 	 * exception of the head start. But each transaction starts with the same
 	 * view of the database.
 	 */
-	private void firstThreadCreatesNodeAheadOfOthers(boolean useEngineInitial,
-			boolean useEngineRest) throws Exception {
+	private void firstThreadCreatesNodeAheadOfOthers(boolean useEngine)
+			throws Exception {
 		assertThat(txManager.getUserTransaction().getStatus(),
 				equalTo(Status.STATUS_NO_TRANSACTION));
 
@@ -113,15 +106,15 @@ public class PersonConcurrencyTest {
 		// threads all start their tx's before the first has committed (i.e. an
 		// up-front query on the DB from the following threads will not find the
 		// node if it queried
-		executorService.execute(new TransactionalNodeCreator("t1", 0, 10000,
-				idCode, exceptions, useEngineInitial));
-		for (int i = 2; i <= 3; i++) {
+		executorService.execute(new TransactionalNodeCreator("t1", 0, 1000,
+				idCode, exceptions, useEngine));
+		for (int i = 2; i <= 50; i++) {
 			// Delay start of trying to persist by 1000ms so that the first
 			// thread has chance to do it and these should queue up behind, in
 			// theory. When these threads create their tx, the node from t1
 			// will not have been committed.
 			executorService.execute(new TransactionalNodeCreator("t" + i, 1000,
-					100, idCode, exceptions, useEngineRest));
+					100, idCode, exceptions, useEngine));
 		}
 
 		executorService.shutdown();
@@ -131,6 +124,7 @@ public class PersonConcurrencyTest {
 			String msg = e.getMessage();
 			LOG.error(e.getClass() + " - "
 					+ msg.substring(msg.indexOf("\nDetails: ") + 9));
+			e.printStackTrace();
 		}
 		assertThat(exceptions.size(), equalTo(0));
 	}
