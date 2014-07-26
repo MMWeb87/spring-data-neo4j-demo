@@ -19,8 +19,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>1.7</java.version>
 		<sdn.version>3.2.0.BUILD-SNAPSHOT</sdn.version>
-		<sdr.version>2.2.0.BUILD-SNAPSHOT</sdr.version>
-		<neo4j.version>2.0.3</neo4j.version>
+		<sdr.version>2.1.1.RELEASE</sdr.version>
+		<neo4j.version>2.1.2</neo4j.version>
 		<jetty.version>9.0.5.v20130815</jetty.version>
 		<aspectj.version>1.7.4</aspectj.version>
 	</properties>
@@ -153,6 +153,7 @@
 							<artifactId>spring-data-neo4j-aspects</artifactId>
 						</aspectLibrary>
 					</aspectLibraries>
+					<!--					
 					<weaveDependencies>
 						<weaveDependency>
 							<groupId>org.neo4j</groupId>
@@ -163,6 +164,7 @@
 							<artifactId>spring-data-neo4j</artifactId>
 						</weaveDependency>
 					</weaveDependencies>
+					-->
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 				</configuration>
@@ -172,6 +174,16 @@
 	</build>
 
 	<repositories>
+		<repository>
+			<id>central</id>
+			<name>Maven Repository Switchboard</name>
+			<layout>default</layout>
+			<url>http://repo1.maven.org/maven2</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+
 		<repository>
 			<id>neo4j-releases</id>
 			<name>Neo4j Releases</name>

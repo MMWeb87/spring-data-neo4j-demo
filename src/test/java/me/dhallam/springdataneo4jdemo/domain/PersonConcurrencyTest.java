@@ -14,7 +14,10 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.Status;
 
 import me.dhallam.springdataneo4jdemo.config.Neo4jTestConfig;
+import me.dhallam.springdataneo4jdemo.domain.Person.Gender;
+import me.dhallam.springdataneo4jdemo.utils.CypherDump;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
@@ -76,7 +79,13 @@ public class PersonConcurrencyTest {
 		firstThreadCreatesNodeAheadOfOthers(true);
 	}
 
+	/**
+	 * TODO Pending https://jira.spring.io/browse/DATAGRAPH-484
+	 * 
+	 * @throws Exception
+	 */
 	@Test
+	@Ignore
 	public void firstThreadCreatesNodeAheadOfOthersNodeEntity()
 			throws Exception {
 		firstThreadCreatesNodeAheadOfOthers(false);
@@ -169,7 +178,13 @@ public class PersonConcurrencyTest {
 		threadsCreateNodesInParallelWhenNodeAlreadyExists(true);
 	}
 
+	/**
+	 * TODO Pending https://jira.spring.io/browse/DATAGRAPH-484
+	 * 
+	 * @throws Exception
+	 */
 	@Test
+	@Ignore
 	public void threadsCreateNodesInParallelWhenNodeAlreadyExistsNodeEntity()
 			throws Exception {
 		threadsCreateNodesInParallelWhenNodeAlreadyExists(false);
@@ -206,7 +221,13 @@ public class PersonConcurrencyTest {
 		threadsCreateSameNodeInParallel(true);
 	}
 
+	/**
+	 * TODO Pending https://jira.spring.io/browse/DATAGRAPH-484
+	 * 
+	 * @throws Exception
+	 */
 	@Test
+	@Ignore
 	public void threadsCreateSameNodeInParallelNodeEntity() throws Exception {
 		threadsCreateSameNodeInParallel(false);
 	}
@@ -312,6 +333,71 @@ public class PersonConcurrencyTest {
 				LOG.debug("{} failed", name);
 			}
 			LOG.debug("{} exiting", name);
+		}
+	}
+
+	@Test
+	public void concurrentCreation() throws Exception {
+		final String idCode = "theid";
+		Runnable thread1 = new Runnable() {
+			public void run() {
+				try (Transaction tx = database.beginTx()) {
+					Thread.sleep(500);
+					assertThat(txManager.getUserTransaction().getStatus(),
+							equalTo(Status.STATUS_ACTIVE));
+
+					LOG.info("Creating Bob");
+					Person bob = new Person().setIdCode(idCode)
+							.setFirstName("Bob").setLastName("Smith")
+							.setGender(Gender.MALE);
+					// Thread.sleep(700); // Delay here makes the output Bob
+					// Smith
+					bob.persist();
+					Person mary = new Person().setIdCode("maryId")
+							.setFirstName("Mary").setLastName("Stevenson")
+							.persist();
+					mary.addFriends(bob);
+					Thread.sleep(2000);
+					tx.success();
+					LOG.info("Created Bob");
+				} catch (Exception e) {
+					LOG.error("Failed");
+				}
+			}
+		};
+		Runnable thread2 = new Runnable() {
+			public void run() {
+				try (Transaction tx = database.beginTx()) {
+					Thread.sleep(1000);
+					assertThat(txManager.getUserTransaction().getStatus(),
+							equalTo(Status.STATUS_ACTIVE));
+					LOG.info("Creating Pete");
+					Person pete = new Person().setIdCode(idCode)
+							.setFirstName("Pete").setLastName("Walker");
+					Thread.sleep(700);
+					pete.persist();
+					tx.success();
+					Thread.sleep(2000);
+					LOG.info("Created Pete");
+				} catch (Exception e) {
+					LOG.error("Failed");
+				}
+			}
+		};
+
+		ExecutorService executorService = Executors.newFixedThreadPool(2);
+
+		executorService.execute(thread1);
+		executorService.execute(thread2);
+
+		executorService.shutdown();
+		executorService.awaitTermination(1, TimeUnit.MINUTES);
+		try (Transaction tx = database.beginTx()) {
+			assertThat(personRepo.count(), equalTo(2L));
+			Person person = personRepo.findByIdCode(idCode);
+			LOG.info("{}", person);
+			CypherDump.dump(database);
+			tx.success();
 		}
 	}
 }

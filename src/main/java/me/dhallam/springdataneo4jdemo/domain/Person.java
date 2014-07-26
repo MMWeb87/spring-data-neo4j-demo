@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.neo4j.graphdb.Direction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +32,9 @@ public class Person {
 	@RelatedTo(type = "FRIENDS_WITH", direction = Direction.BOTH)
 	private Set<Person> friends;
 
-	@Indexed(unique=true)
+	@Indexed(unique = true)
 	private String idCode;
-	
+
 	private String firstName;
 	private String lastName;
 	private Gender gender;
@@ -94,7 +93,7 @@ public class Person {
 		this.gender = gender;
 		return this;
 	}
-	
+
 	public Set<String> getPhoneNumbers() {
 		return Collections.unmodifiableSet(phoneNumbers);
 	}
@@ -103,35 +102,39 @@ public class Person {
 		this.phoneNumbers.add(phoneNumber);
 		return this;
 	}
-	
+
 	public Person removePhoneNumber(String phoneNumber) {
 		this.phoneNumbers.remove(phoneNumber);
 		return this;
 	}
-	
+
 	public Map<String, Object> getAdditionalMetadata() {
 		return Collections.unmodifiableMap(additionalMetadata.asMap());
 	}
-	
+
 	public Person addAdditionalMetadata(String key, String value) {
 		additionalMetadata.setProperty(key, value);
 		return this;
 	}
-	
+
 	public Person removeAdditionalMetadata(String key) {
 		additionalMetadata.removeProperty(key);
 		return this;
 	}
-	
+
 	@Override
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		return "Person [id=" + id + ", friends.size()=" + friends.size() + ", "
+				+ "idCode=" + idCode + ", firstName=" + firstName
+				+ ", lastName=" + lastName + ", gender=" + gender
+				+ ", phoneNumbers=" + phoneNumbers + ", additionalMetadata="
+				+ additionalMetadata + "]";
 	}
 
 	@Override
 	public boolean equals(Object other) {
 		LOG.info(this + " equals " + other);
-		
+
 		if (this == other) {
 			return true;
 		}
@@ -144,7 +147,6 @@ public class Person {
 			return false;
 		}
 
-		
 		return getIdCode().equals(((Person) other).getIdCode());
 	}
 
